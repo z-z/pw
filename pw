@@ -1,0 +1,91 @@
+#!/bin/bash
+
+STORAGE=$PW_PATH/pw.txt
+touch -- "$STORAGE"
+
+COL_SP=':::::'
+
+help () {
+	echo "Утилита для быстрого копирования значения по ключу из файла в буфер\n"
+	echo "Доступные параметры:"
+	echo "\t- list              - получение всех строк из файла"
+	echo "\t- get <key>         - копирование значения по указанному ключу в буфер"
+	echo "\t- add <key> <value> - добавление новой пары ключ/значение"
+	echo "\t- delete <key>      - удаление записи по ключу"
+	exit
+}
+
+err () {
+	echo $1
+	exit
+}
+
+list () {
+	cat $STORAGE | awk -F $COL_SP '{print $1}'
+}
+
+get () {
+	if [ -z $2 ] ; then
+		err "Введите ключ"
+	fi
+
+	PASSWORD=$(awk -F $COL_SP '/^'$2$COL_SP'/{print $2}' $STORAGE)
+
+	if [ -z $PASSWORD ] ; then
+		err "Ключ $2 не существует"
+	fi
+
+	if [[ $(awk -F $COL_SP '/^'$2'/{print $3}' $STORAGE) -eq 1 ]] ; then
+		PASSWORD=$(echo $PASSWORD | openssl aes-256-cbc -a -A -d)
+	fi
+
+	echo $PASSWORD | tr -d '\n' | pbcopy
+}
+
+del () {
+	sed -E "/^$2$COL_SP.*$/d" $STORAGE > $STORAGE.bak && mv $STORAGE.bak $STORAGE
+}
+
+add () {
+
+	if grep -q '^'$2 $STORAGE ; then
+		err "Такой пароль уже существует"
+	fi
+
+	if [[ -z $2 || -z $3 ]] ; then
+		err " Введите ключ и значение"
+	fi
+
+	LOGIN=$2
+
+	if [[ -z $4 ]] ; then
+		PASSWORD=$3
+		ENCRYPT=0
+	else
+		PASSWORD=$(echo $3 | openssl aes-256-cbc -a -A)
+		ENCRYPT=1
+	fi
+
+	printf "%s${COL_SP}%s${COL_SP}%s\n" $LOGIN $PASSWORD $ENCRYPT >> $STORAGE
+}
+
+cssh () {
+	get $@
+	ssh $2
+}
+
+
+
+if [ -z "$1" ] ; then
+	help
+fi
+
+case $1 in
+	help) help ;;
+	list) list ;;
+	get)  get $@ ;;
+	add)  add $@ ;;
+	del)  del $@ ;;
+	ssh)  cssh $@ ;;
+	*)    help ;;
+esac
