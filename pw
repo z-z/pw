@@ -82,7 +82,7 @@ cssh () {
 
 case $1 in
 	-help) help ;;
-	-l) list ;;
+	-ls) list ;;
 
 	-add)  add $@ ;;
 	-rm)  remove $@ ;;
