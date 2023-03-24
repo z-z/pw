@@ -47,7 +47,7 @@ get () {
 	echo $PASSWORD | tr -d '\n' | pbcopy
 }
 
-del () {
+remove () {
 	sed -E "/^$2$COL_SP.*$/d" $STORAGE > $STORAGE.bak && mv $STORAGE.bak $STORAGE
 }
 
@@ -83,7 +83,7 @@ case $1 in
 	-l) list ;;
 
 	-add)  add $@ ;;
-	-rm)  del $@ ;;
+	-rm)  remove $@ ;;
 
 	*)  get $@ ;;
 
