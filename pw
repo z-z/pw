@@ -47,7 +47,7 @@ get () {
 		PASSWORD=$(echo $PASSWORD | openssl aes-256-cbc -a -A -d)
 	fi
 
-	echo $PASSWORD | tr -d '\n' | pbcopy
+	echo $PASSWORD | tr -d '\n' | xclip -selection c
 }
 
 remove () {
