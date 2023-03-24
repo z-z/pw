@@ -23,11 +23,13 @@ err () {
 	exit
 }
 
+invalid () {
+	err "Команды $1 не существует"
+}
+
 list () {
 	cat $STORAGE | awk -F $COL_SP '{print $1}'
 }
-
-
 
 get () {
 	PASSWORD=$(awk -F $COL_SP '/^'$1$COL_SP'/{print $2}' $STORAGE)
@@ -85,6 +87,7 @@ case $1 in
 	-add)  add $@ ;;
 	-rm)  remove $@ ;;
 
+	-*)  invalid $@ ;;
 	*)  get $@ ;;
 
 	-ssh)  cssh $@ ;;
