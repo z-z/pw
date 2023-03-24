@@ -54,9 +54,9 @@ remove () {
 }
 
 add () {
-#	if grep -q '^'$2 $STORAGE ; then
-#		err "Такой пароль уже существует"
-#	fi
+	if grep -q '^'$2 $STORAGE ; then
+		err "Такой ключ уже существует"
+	fi
 
 	if [[ -z $2 || -z $3 ]] ; then
 		err " Введите ключ и значение"
