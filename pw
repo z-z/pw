@@ -14,6 +14,10 @@ help () {
 	exit
 }
 
+if [ -z "$1" ] ; then
+	help
+fi
+
 err () {
 	echo $1
 	exit
@@ -46,7 +50,6 @@ del () {
 }
 
 add () {
-
 #	if grep -q '^'$2 $STORAGE ; then
 #		err "Такой пароль уже существует"
 #	fi
@@ -73,18 +76,14 @@ cssh () {
 	ssh $2
 }
 
-
-
-if [ -z "$1" ] ; then
-	help
-fi
-
 case $1 in
-	help) help ;;
-	list) list ;;
-	get)  get $@ ;;
-	add)  add $@ ;;
-	del)  del $@ ;;
-	ssh)  cssh $@ ;;
-	*)    help ;;
+	-help) help ;;
+	-l) list ;;
+
+	-get)  get $@ ;;
+
+	-add)  add $@ ;;
+	-rm)  del $@ ;;
+
+	-ssh)  cssh $@ ;;
 esac
