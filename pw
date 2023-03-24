@@ -14,9 +14,17 @@ help () {
 	exit
 }
 
+if [ -z "$1" ] ; then
+	help
+fi
+
 err () {
 	echo $1
 	exit
+}
+
+invalid () {
+	err "Команда $1 не существует"
 }
 
 list () {
@@ -24,29 +32,28 @@ list () {
 }
 
 get () {
-	if [ -z $2 ] ; then
+	PASSWORD=$(awk -F $COL_SP '/^'$1$COL_SP'/{print $2}' $STORAGE)
+
+	if [ -z $1 ] ; then
 		err "Введите ключ"
 	fi
 
-	PASSWORD=$(awk -F $COL_SP '/^'$2$COL_SP'/{print $2}' $STORAGE)
-
 	if [ -z $PASSWORD ] ; then
-		err "Ключ $2 не существует"
+		err "Ключ $1 не существует"
 	fi
 
-	if [[ $(awk -F $COL_SP '/^'$2'/{print $3}' $STORAGE) -eq 1 ]] ; then
+	if [[ $(awk -F $COL_SP '/^'$1'/{print $3}' $STORAGE) -eq 1 ]] ; then
 		PASSWORD=$(echo $PASSWORD | openssl aes-256-cbc -a -A -d)
 	fi
 
 	echo $PASSWORD | tr -d '\n' | pbcopy
 }
 
-del () {
+remove () {
 	sed -E "/^$2$COL_SP.*$/d" $STORAGE > $STORAGE.bak && mv $STORAGE.bak $STORAGE
 }
 
 add () {
-
 #	if grep -q '^'$2 $STORAGE ; then
 #		err "Такой пароль уже существует"
 #	fi
@@ -73,18 +80,15 @@ cssh () {
 	ssh $2
 }
 
-
-
-if [ -z "$1" ] ; then
-	help
-fi
-
 case $1 in
-	help) help ;;
-	list) list ;;
-	get)  get $@ ;;
-	add)  add $@ ;;
-	del)  del $@ ;;
-	ssh)  cssh $@ ;;
-	*)    help ;;
+	-help) help ;;
+	-l) list ;;
+
+	-add)  add $@ ;;
+	-rm)  remove $@ ;;
+
+	-*)  invalid $@ ;;
+	*)  get $@ ;;
+
+	-ssh)  cssh $@ ;;
 esac
