@@ -20,38 +20,8 @@ err () {
 	exit
 }
 
-if [ -z "$1" ] ; then
-	err "Введите ключ или команду"
-fi
-
 invalid () {
 	err "Команда $1 не существует"
-}
-
-list () {
-	cat $STORAGE | awk -F $COL_SP '{print $1}'
-}
-
-get () {
-	PASSWORD=$(awk -F $COL_SP '/^'$1$COL_SP'/{print $2}' $STORAGE)
-
-	if [ -z $1 ] ; then
-		err "Введите ключ"
-	fi
-
-	if [ -z $PASSWORD ] ; then
-		err "Ключ $1 не существует"
-	fi
-
-	if [[ $(awk -F $COL_SP '/^'$1'/{print $3}' $STORAGE) -eq 1 ]] ; then
-		PASSWORD=$(echo $PASSWORD | openssl aes-256-cbc -a -A -d)
-	fi
-
-	echo $PASSWORD | tr -d '\n' | xclip -selection c
-}
-
-remove () {
-	sed -E "/^$2$COL_SP.*$/d" $STORAGE > $STORAGE.bak && mv $STORAGE.bak $STORAGE
 }
 
 add () {
@@ -76,19 +46,50 @@ add () {
 	printf "%s${COL_SP}%s${COL_SP}%s\n" $LOGIN $PASSWORD $ENCRYPT >> $STORAGE
 }
 
+remove () {
+	sed -E "/^$2$COL_SP.*$/d" $STORAGE > $STORAGE.bak && mv $STORAGE.bak $STORAGE
+}
+
+get () {
+	if [ -z "$1" ] ; then
+		err "Введите ключ или команду"
+	fi
+
+	if [ -z $1 ] ; then
+		err "Введите ключ"
+	fi
+
+	PASSWORD=$(awk -F $COL_SP '/^'$1$COL_SP'/{print $2}' $STORAGE)
+
+	if [ -z $PASSWORD ] ; then
+		err "Ключ $1 не существует"
+	fi
+
+	if [[ $(awk -F $COL_SP '/^'$1'/{print $3}' $STORAGE) -eq 1 ]] ; then
+		PASSWORD=$(echo $PASSWORD | openssl aes-256-cbc -a -A -d)
+	fi
+
+	echo $PASSWORD | tr -d '\n' | xclip -selection c
+}
+
 cssh () {
 	get $2
 	ssh $2
 }
 
+list () {
+	cat $STORAGE | awk -F $COL_SP '{print $1}'
+}
+
 case $1 in
 	-help) help ;;
-	-ls) list ;;
 
 	-add)  add $@ ;;
 	-rm)  remove $@ ;;
 
 	-ssh)  cssh $@ ;;
+
+	-ls) list ;;
 
 	-*)  invalid $@ ;;
 	*)  get $1 ;;
