@@ -76,7 +76,7 @@ add () {
 }
 
 cssh () {
-	get $@
+	get $2
 	ssh $2
 }
 
@@ -87,8 +87,8 @@ case $1 in
 	-add)  add $@ ;;
 	-rm)  remove $@ ;;
 
-	-*)  invalid $@ ;;
-	*)  get $@ ;;
-
 	-ssh)  cssh $@ ;;
+
+	-*)  invalid $@ ;;
+	*)  get $1 ;;
 esac
