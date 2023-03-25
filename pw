@@ -100,13 +100,13 @@ copy () {
 case $1 in
 	-help) help ;;
 
-	-add) add $@ ;;
-	-rm)  remove $@ ;;
+	-add)  add $@ ;;
+	-rm)   remove $@ ;;
 
 	-ssh)  cssh $@ ;;
 
-	-ls) list ;;
+	-ls)   list ;;
 
-	-*)  invalid $@ ;;
-	*)  get $1 ;;
+	-*)    invalid $@ ;;
+	*)     get $1 ;;
 esac
