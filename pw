@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 STORAGE=$PW_PATH/pw.txt
 touch -- "$STORAGE"
@@ -6,18 +6,14 @@ touch -- "$STORAGE"
 COL_SP=':::::'
 
 help () {
-	echo -e "Утилита для быстрого копирования значения по ключу из файла в буфер\n"
+	echo -e "Утилита для копирования значения по ключу из файла в буфер\n"
 	echo -e "Доступные параметры:\n"
-	echo "pw <key>              - копирование значения по указанному ключу в буфер"
-	echo "pw -add <key> <value> - добавление новой пары ключ/значение"
+	echo "pw <key>              - копирование значения по ключу"
+	echo "pw -add <key> <value> - добавление пары ключ/значение"
 	echo "pw -rm <key>          - удаление записи по ключу"
-	echo "pw -ls                - получение всех строк из файла"
+	echo "pw -ls                - получение всех ключей из файла"
 	exit
 }
-
-if [ -z "$1" ] ; then
-	help
-fi
 
 err () {
 	echo $1
@@ -28,42 +24,18 @@ invalid () {
 	err "Команда $1 не существует"
 }
 
-list () {
-	cat $STORAGE | awk -F $COL_SP '{print $1}'
-}
-
-get () {
-	PASSWORD=$(awk -F $COL_SP '/^'$1$COL_SP'/{print $2}' $STORAGE)
-
-	if [ -z $1 ] ; then
+add () {
+	if [[ -z $2 ]] ; then
 		err "Введите ключ"
 	fi
 
-	if [ -z $PASSWORD ] ; then
-		err "Ключ $1 не существует"
-	fi
-
-	if [[ $(awk -F $COL_SP '/^'$1'/{print $3}' $STORAGE) -eq 1 ]] ; then
-		PASSWORD=$(echo $PASSWORD | openssl aes-256-cbc -a -A -d)
-	fi
-
-	echo $PASSWORD | tr -d '\n' | pbcopy
-}
-
-remove () {
-	sed -E "/^$2$COL_SP.*$/d" $STORAGE > $STORAGE.bak && mv $STORAGE.bak $STORAGE
-}
-
-add () {
 	if grep -q '^'$2 $STORAGE ; then
-		err "Такой ключ уже существует"
+		err "Ключ $2 уже существует"
 	fi
 
-	if [[ -z $2 || -z $3 ]] ; then
-		err " Введите ключ и значение"
+	if [[ -z $3 ]] ; then
+		err "Введите значение"
 	fi
-
-	LOGIN=$2
 
 	if [[ -z $4 ]] ; then
 		PASSWORD=$3
@@ -73,7 +45,17 @@ add () {
 		ENCRYPT=1
 	fi
 
+	LOGIN=$2
+
 	printf "%s${COL_SP}%s${COL_SP}%s\n" $LOGIN $PASSWORD $ENCRYPT >> $STORAGE
+}
+
+remove () {
+	sed -E "/^$2$COL_SP.*$/d" $STORAGE > $STORAGE.bak && mv $STORAGE.bak $STORAGE
+}
+
+list () {
+	cat $STORAGE | awk -F $COL_SP '{print $1}'
 }
 
 cssh () {
@@ -81,15 +63,50 @@ cssh () {
 	ssh $2
 }
 
+get () {
+	if [ -z "$1" ] ; then
+		err "Введите ключ или команду"
+	fi
+
+	if [ -z $1 ] ; then
+		err "Введите ключ"
+	fi
+
+	PASSWORD=$(awk -F $COL_SP '/^'$1$COL_SP'/{print $2}' $STORAGE)
+
+	if [ -z $PASSWORD ] ; then
+		err "Ключ $1 не существует"
+	fi
+
+	if [[ $(awk -F $COL_SP '/^'$1'/{print $3}' $STORAGE) -eq 1 ]] ; then
+		PASSWORD=$(echo $PASSWORD | openssl aes-256-cbc -a -A -d)
+	fi
+
+	copy $PASSWORD
+}
+
+copy () {
+	if [ "$(uname)" == "Darwin" ]; then
+		echo $1 | tr -d '\n' | pbcopy    
+	elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+		echo $1 | tr -d '\n' | xclip -selection c
+	# elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
+	    # Do something under 32 bits Windows NT platform
+	# elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]; then
+	    # Do something under 64 bits Windows NT platform
+	fi
+}
+
 case $1 in
 	-help) help ;;
-	-ls) list ;;
 
 	-add)  add $@ ;;
-	-rm)  remove $@ ;;
+	-rm)   remove $@ ;;
+
+	-ls)   list ;;
 
 	-ssh)  cssh $@ ;;
 
-	-*)  invalid $@ ;;
-	*)  get $1 ;;
+	-*)    invalid $@ ;;
+	*)     get $1 ;;
 esac
