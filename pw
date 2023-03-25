@@ -54,13 +54,13 @@ remove () {
 	sed -E "/^$2$COL_SP.*$/d" $STORAGE > $STORAGE.bak && mv $STORAGE.bak $STORAGE
 }
 
+list () {
+	cat $STORAGE | awk -F $COL_SP '{print $1}'
+}
+
 cssh () {
 	get $2
 	ssh $2
-}
-
-list () {
-	cat $STORAGE | awk -F $COL_SP '{print $1}'
 }
 
 get () {
@@ -103,9 +103,9 @@ case $1 in
 	-add)  add $@ ;;
 	-rm)   remove $@ ;;
 
-	-ssh)  cssh $@ ;;
-
 	-ls)   list ;;
+
+	-ssh)  cssh $@ ;;
 
 	-*)    invalid $@ ;;
 	*)     get $1 ;;
