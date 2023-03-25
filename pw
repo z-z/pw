@@ -8,10 +8,11 @@ COL_SP=':::::'
 help () {
 	echo -e "Утилита для копирования значения по ключу из файла в буфер\n"
 	echo -e "Доступные параметры:\n"
-	echo "pw <key>              - копирование значения по ключу"
 	echo "pw -add <key> <value> - добавление пары ключ/значение"
 	echo "pw -rm <key>          - удаление записи по ключу"
 	echo "pw -ls                - получение всех ключей из файла"
+	echo "pw <key>              - копирование значения по ключу"
+	echo "pw -ssh <key>         - копирование значения, запуск ssh"
 	exit
 }
 
@@ -58,11 +59,6 @@ list () {
 	cat $STORAGE | awk -F $COL_SP '{print $1}'
 }
 
-cssh () {
-	get $2
-	ssh $2
-}
-
 get () {
 	if [ -z "$1" ] ; then
 		err "Введите ключ или команду"
@@ -95,6 +91,11 @@ copy () {
 	# elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]; then
 	    # Do something under 64 bits Windows NT platform
 	fi
+}
+
+cssh () {
+	get $2
+	ssh $2
 }
 
 case $1 in
