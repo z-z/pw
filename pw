@@ -30,7 +30,7 @@ add () {
 		err "Введите ключ"
 	fi
 
-	if grep -q '^'$2 $STORAGE ; then
+	if grep -q '^'$2$COL_SP $STORAGE ; then
 		err "Ключ $2 уже существует"
 	fi
 
