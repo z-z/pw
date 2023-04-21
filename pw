@@ -6,18 +6,19 @@ touch -- "$STORAGE"
 COL_SP=':::::'
 
 help () {
-	echo -e "Утилита для копирования значения по ключу из файла в буфер\n"
+	# echo -e "Утилита для копирования значения по ключу из файла в буфер\n"
 	echo -e "Доступные параметры:\n"
-	echo "pw -add <key> <value> - добавление пары ключ/значение"
-	echo "pw -rm <key>          - удаление записи по ключу"
-	echo "pw -ls                - получение всех ключей из файла"
-	echo "pw <key>              - копирование значения по ключу"
-	echo "pw -ssh <key>         - копирование значения, запуск ssh"
+	echo "pw --add <key> <value> - добавление пары ключ/значение"
+	echo "pw --remove <key>      - удаление записи по ключу"
+	echo "pw --list              - получение всех ключей из файла"
+	echo "pw <key>               - копирование значения по ключу"
+	echo "pw --ssh <key>         - копирование значения, запуск ssh"
+	echo -e "\nКаждая опция имеет краткую версию: pw --help = pw -h"
 	exit
 }
 
 err () {
-	echo $1
+	echo -e $1
 	exit
 }
 
@@ -56,12 +57,16 @@ remove () {
 }
 
 list () {
-	cat $STORAGE | awk -F $COL_SP '{print $1}'
+	if [ -s $STORAGE ]; then
+		cat $STORAGE | awk -F $COL_SP '{print $1}'
+	else
+		err "Нет сохраненных ключей"
+	fi
 }
 
 get () {
 	if [ -z "$1" ] ; then
-		err "Введите ключ или команду"
+		err "Введите ключ или команду, например: pw --help"
 	fi
 
 	if [ -z $1 ] ; then
@@ -99,14 +104,14 @@ cssh () {
 }
 
 case $1 in
-	-help) help ;;
+	-h | --help) 	 help ;;
 
-	-add)  add $@ ;;
-	-rm)   remove $@ ;;
+	-a | --add)  	 add $@ ;;
+	-r | --remove)   remove $@ ;;
 
-	-ls)   list ;;
+	-l | --list)     list ;;
 
-	-ssh)  cssh $@ ;;
+	-s | --ssh)      cssh $@ ;;
 
 	-*)    invalid $@ ;;
 	*)     get $1 ;;
